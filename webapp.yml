@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels: # All the pods having below label belongs to this deployment.
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: "nanajanashia/k8s-demo-app:v1.0"
+        ports:
+        - containerPort: 3000
+        env:
+          - name: USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: mongo-user
+          - name: USER_PWD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-secret
+                key: mongo-password
+          - name: DB_URL        #application needs database endpoint
+            valueFrom:
+              configMapKeyRef:
+                name: mongo-config
+                key: mongo-url     #connectivity with database is configured.
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service
+spec:
+  type: NodePort #For external connectivity.
+  selector:     #select pods to forward the requests to.
+    app: webapp
+  ports:
+    - protocol: TCP
+      port: 3000         #service port
+      targetPort: 3000 #containerPort of Deployment. Targetport=containerPort
+      nodePort: 30100

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:                  #Inside Deployment.metadata we have name and labels.
+  name: mongo-deployment
+  labels:
+    app: mongo
+spec:                      #inside deploy.spec we have Podreplicas,PodSelector,Podtemplate.
+  replicas: 1
+  selector:
+    matchLabels:           # All the pods having below label belongs to this deployment.
+      app: mongo
+  template:                #Inside Podtemplate, we have metadata and spec.
+    metadata:              #Inside podtemplate.metadata, we have labels
+      labels:              
+        app: mongo
+    spec:                  #Inside podtemplate.spec, we have containers info.
+      containers:
+      - name: mongodb
+        image: "mongo:5.0"
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-user               #kubernetes will find secret with mongo-secret name and get the value set for this username key and substitute it as a value of this environment variable. In the same way we will configure password.
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-password
+---                                      #Management of multiple resources can be simplified by grouping them together in the same file (separated by --- in YAML)
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  selector:     #select pods to forward the requests to.
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017         #service port
+      targetPort: 27017 #containerPort of Deployment. Targetport=containerPort
