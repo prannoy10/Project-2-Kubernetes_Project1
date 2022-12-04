@@ -41,7 +41,7 @@ kind: Service
 metadata:
   name: webapp-service
 spec:
-  type: NodePort #For external connectivity.
+  type: LoadBalancer #For external connectivity.
   selector:     #select pods to forward the requests to.
     app: webapp
   ports:
